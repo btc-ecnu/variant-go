@@ -457,7 +457,9 @@
         let isHoverValid = false;
 
         let historyBoards = [];
-        let lastMoveMarkers = []; // 格式 { vertex, color }
+        let historyBoardSet = new Set();
+
+        let lastMoveMarkers = [];
         let showEstimateActive = false;
 
         // 缓存形势判断结果
@@ -484,9 +486,18 @@
         }
 
         function deepCopyBoard(src) { return src.slice(); }
-        function boardsEqual(b1, b2) {
-            for (let i = 0; i < V; i++) if (b1[i] !== b2[i]) return false;
-            return true;
+
+        function boardToString(board) {
+            return board.join(',');
+        }
+
+        function rebuildHistorySet() {
+            historyBoardSet.clear();
+            historyBoards.forEach(b => historyBoardSet.add(boardToString(b)));
+        }
+
+        function isRepeatBoard(newBoard) {
+            return historyBoardSet.has(boardToString(newBoard));
         }
 
         // 气计算
@@ -543,13 +554,6 @@
             if (!hasLiberty(newBoard, vertex)) return null;
 
             return newBoard;
-        }
-
-        function isRepeatBoard(newBoard) {
-            for (let hist of historyBoards) {
-                if (boardsEqual(hist, newBoard)) return true;
-            }
-            return false;
         }
 
         // 判断一个空点（气点）是否被对方棋子邻接
@@ -964,6 +968,7 @@
                         board = msg.board;
                         currentPlayer = msg.currentPlayer;
                         historyBoards = msg.historyBoards;
+                        historyBoardSet.add(boardToString(board));
                         lastMoveMarkers = msg.lastMoveMarkers || [];
                         if (showEstimateActive) {
                             cachedLiveBoard = removeDeadAndDying(board);
@@ -985,11 +990,11 @@
                     }
                     break;
                 case 'newGame':
-                    // 新局：重置所有状态
                     board = msg.board; // 空棋盘
                     currentPlayer = msg.currentPlayer; // 1
                     lastMoveMarkers = msg.lastMoveMarkers || []; // 空
                     historyBoards = [];
+                    historyBoardSet.clear();
                     myColor = null;
                     // 重置颜色选择UI
                     radioBlack.checked = false;
@@ -1020,18 +1025,6 @@
             }
         }
 
-        // 落子发送
-        function sendMove(newBoard, nextPlayer, markers) {
-            historyBoards.push(deepCopyBoard(board));
-            ws.send(JSON.stringify({
-                type: 'move',
-                board: newBoard,
-                nextPlayer: nextPlayer,
-                historyBoards: historyBoards,
-                lastMoveMarkers: markers
-            }));
-        }
-
         function commitMove(vertex) {
             if (!isMyTurn) return false;
             if (board[vertex] !== 0) return false;
@@ -1045,11 +1038,19 @@
             let markers = [{ vertex, color: playerVal }];
             lastMoveMarkers = markers;
             let nextPlayer = currentPlayer === 1 ? 2 : 1;
-            sendMove(newBoard, nextPlayer, markers);
+            historyBoards.push(deepCopyBoard(board));
+            historyBoardSet.add(boardToString(board));
+            board = newBoard;
+            ws.send(JSON.stringify({
+                type: 'move',
+                board: newBoard,
+                nextPlayer: nextPlayer,
+                historyBoards: historyBoards,
+                lastMoveMarkers: markers
+            }));
             return true;
         }
 
-        // 鼠标事件：找到最近顶点
         function getNearestVertex(x, y) {
             let minDist = Infinity;
             let best = -1;
@@ -1119,7 +1120,10 @@
             if (showEstimateActive) showEstimate(); else clearEstimate();
         });
         document.getElementById('passBtn').addEventListener('click', () => {
-            if (!isMyTurn) return;
+            if (!isMyTurn)
+                return;
+            historyBoards.push(deepCopyBoard(board));
+            historyBoardSet.add(boardToString(board));
             ws.send(JSON.stringify({ type: 'pass', player: myColor }));
         });
         document.getElementById('undoBtn').addEventListener('click', () => {
