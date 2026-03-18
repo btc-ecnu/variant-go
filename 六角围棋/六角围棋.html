@@ -443,6 +443,10 @@
         const centerX = hexData.centerX;
         const centerY = hexData.centerY;
 
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        document.body.classList.add(isTouchDevice ? 'touch-device' : 'no-touch');
+
         // ==================== 游戏状态 ====================
         let board = Array(V).fill(0);
         let currentPlayer = 1;
@@ -1062,24 +1066,6 @@
             return -1;
         }
 
-        canvas.addEventListener('mousemove', (e) => {
-            if ('ontouchstart' in window) return;
-            const rect = canvas.getBoundingClientRect();
-            const scale = 600 / rect.width;
-            const x = (e.clientX - rect.left) * scale;
-            const y = (e.clientY - rect.top) * scale;
-            const v = getNearestVertex(x, y);
-            hoverVertex = v;
-            isHoverValid = (v !== -1);
-            drawBoard();
-        });
-
-        canvas.addEventListener('mouseleave', () => {
-            hoverVertex = -1;
-            isHoverValid = false;
-            drawBoard();
-        });
-
         canvas.addEventListener('click', (e) => {
             if (!isMyTurn) return;
             const rect = canvas.getBoundingClientRect();
@@ -1089,6 +1075,25 @@
             const v = getNearestVertex(x, y);
             if (v !== -1) commitMove(v);
         });
+        if (isMouseDevice) {
+            canvas.addEventListener('mousemove', (e) => {
+                if ('ontouchstart' in window) return;
+                const rect = canvas.getBoundingClientRect();
+                const scale = 600 / rect.width;
+                const x = (e.clientX - rect.left) * scale;
+                const y = (e.clientY - rect.top) * scale;
+                const v = getNearestVertex(x, y);
+                hoverVertex = v;
+                isHoverValid = (v !== -1);
+                drawBoard();
+            });
+            canvas.addEventListener('mouseleave', () => {
+                hoverVertex = -1;
+                isHoverValid = false;
+                drawBoard();
+            });
+        }
+
 
         // 触摸事件支持
         canvas.addEventListener('touchstart', (e) => {
