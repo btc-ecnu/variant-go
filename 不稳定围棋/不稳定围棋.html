@@ -302,6 +302,7 @@
         const UNSTABLE_LIFETIME = 40;
 
         const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         document.body.classList.add(isTouchDevice ? 'touch-device' : 'no-touch');
 
         // 核心数据结构
@@ -1097,22 +1098,6 @@
             return { row: closestRow, col: closestCol };
         }
 
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const scale = 600 / rect.width;
-            const x = (e.clientX - rect.left) * scale;
-            const y = (e.clientY - rect.top) * scale;
-            const { row, col } = getClosestIntersection(x, y);
-            hoverRow = row;
-            hoverCol = col;
-            isHoverValid = true;
-            drawBoardWithOverlay();
-        });
-        canvas.addEventListener('mouseleave', () => {
-            isHoverValid = false;
-            hoverRow = -1; hoverCol = -1;
-            drawBoardWithOverlay();
-        });
         canvas.addEventListener('click', (e) => {
             if (!isMyTurn) return;
             const rect = canvas.getBoundingClientRect();
@@ -1122,6 +1107,24 @@
             const { row, col } = getClosestIntersection(x, y);
             commitMove(row, col);
         });
+        if (isMouseDevice) {
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scale = 600 / rect.width;
+                const x = (e.clientX - rect.left) * scale;
+                const y = (e.clientY - rect.top) * scale;
+                const { row, col } = getClosestIntersection(x, y);
+                hoverRow = row;
+                hoverCol = col;
+                isHoverValid = true;
+                drawBoardWithOverlay();
+            });
+            canvas.addEventListener('mouseleave', () => {
+                isHoverValid = false;
+                hoverRow = -1; hoverCol = -1;
+                drawBoardWithOverlay();
+            });
+        }
 
         // 按钮事件
         document.getElementById('newGameBtn').addEventListener('click', () => {
