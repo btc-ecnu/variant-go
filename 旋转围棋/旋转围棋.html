@@ -1116,7 +1116,7 @@
         // ========== WebSocket 处理 ==========
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}`;
+            const wsUrl = `${protocol}//${window.location.host}/rotation-weiqi`;
             ws = new WebSocket(wsUrl);
             ws.onopen = () => console.log('已连接对弈服务器');
             ws.onmessage = (e) => {
