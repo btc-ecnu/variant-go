@@ -883,7 +883,7 @@
         // ==================== WebSocket ====================
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}`;
+            const wsUrl = `${protocol}//${window.location.host}/hexagon-weiqi`;
             ws = new WebSocket(wsUrl);
             ws.onopen = () => console.log('已连接');
             ws.onmessage = (e) => {
