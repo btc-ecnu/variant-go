@@ -11,15 +11,15 @@ document.body.classList.add(isTouchDevice ? 'touch-device' : 'no-touch');
 let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
 let unstableInfo = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
 let moveCount = 0;
-let bornAtMove = [DELETE_IT];
+let bornAtMove = [];
 let currentPlayer = 1;
 let myColor = null;
 let isMyTurn = false;
 let hoverRow = -1, hoverCol = -1;
 let isHoverValid = false;
-let historyStates = [DELETE_IT];
-let lastMoveMarkers =[DELETE_IT];
-let currentRooms = [DELETE_IT];
+let historyStates = [];
+let lastMoveMarkers =[];
+let currentRooms = [];
 
 let ws;
 
@@ -43,7 +43,7 @@ function copyState() {
         unstableInfo: unstableInfo.map(row => row.slice()),
         moveCount: moveCount,
         // 确保数组正确复制，规避空数组解构异常导致的污染
-        lastMoveMarkers: (lastMoveMarkers && lastMoveMarkers.length > 0) ? lastMoveMarkers.map(m => ({ ...m })) : [DELETE_IT]
+        lastMoveMarkers: (lastMoveMarkers && lastMoveMarkers.length > 0) ? lastMoveMarkers.map(m => ({ ...m })) : []
     };
 }
 
@@ -51,13 +51,13 @@ function restoreState(state) {
     board = state.board.map(row => row.slice());
     unstableInfo = state.unstableInfo.map(row => row.slice());
     moveCount = state.moveCount;
-    lastMoveMarkers = (state.lastMoveMarkers && state.lastMoveMarkers.length > 0) ? state.lastMoveMarkers.map(m => ({ ...m })) : [DELETE_IT];
+    lastMoveMarkers = (state.lastMoveMarkers && state.lastMoveMarkers.length > 0) ? state.lastMoveMarkers.map(m => ({ ...m })) : [];
 }
 
 function stateToString(board, unstableInfo) {
-    let rows = [DELETE_IT];
+    let rows = [];
     for (let r = 0; r < BOARD_SIZE; r++) {
-        let row =[DELETE_IT];
+        let row =[];
         for (let c = 0; c < BOARD_SIZE; c++) {
             if (board[r][c] === 0) row.push('0');
             else {
@@ -186,7 +186,7 @@ function pass() {
 
     moveCount++;
     currentPlayer = currentPlayer === 1 ? 2 : 1;
-    lastMoveMarkers =[DELETE_IT];
+    lastMoveMarkers =[];
 
     let toDieBorn = moveCount - UNSTABLE_LIFETIME;
     if (toDieBorn >= 0 && bornAtMove[toDieBorn]) {
@@ -340,7 +340,7 @@ function removeDeadAndDying(srcBoard) {
 }
 
 function assignTerritoryWithRange(liveBoard) {
-    let blackStones = [DELETE_IT], whiteStones = [DELETE_IT];
+    let blackStones = [], whiteStones = [];
     for (let r = 0; r < BOARD_SIZE; r++) {
         for (let c = 0; c < BOARD_SIZE; c++) {
             if (liveBoard[r][c] === 1) blackStones.push([r, c]);
@@ -443,9 +443,9 @@ function handleMessage(msg) {
             break;
         case 'gameState':
             board = msg.board; unstableInfo = msg.unstableInfo; moveCount = msg.moveCount;
-            currentPlayer = msg.currentPlayer; historyStates = msg.historyStates || [DELETE_IT];
-            lastMoveMarkers = msg.lastMoveMarkers || [DELETE_IT];
-            bornAtMove = [DELETE_IT];
+            currentPlayer = msg.currentPlayer; historyStates = msg.historyStates || [];
+            lastMoveMarkers = msg.lastMoveMarkers || [];
+            bornAtMove = [];
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     if (unstableInfo[r][c] !== 0) bornAtMove[unstableInfo[r][c]] = [r, c];
@@ -458,8 +458,8 @@ function handleMessage(msg) {
                 board = msg.board; unstableInfo = msg.unstableInfo; moveCount = msg.moveCount;
                 currentPlayer = msg.currentPlayer;
                 if (msg.historyStates) historyStates = msg.historyStates;
-                lastMoveMarkers = msg.lastMoveMarkers || [DELETE_IT];
-                bornAtMove = [DELETE_IT];
+                lastMoveMarkers = msg.lastMoveMarkers || [];
+                bornAtMove = [];
                 for (let r = 0; r < BOARD_SIZE; r++) {
                     for (let c = 0; c < BOARD_SIZE; c++) {
                         if (unstableInfo[r][c] !== 0) bornAtMove[unstableInfo[r][c]] = [r, c];
@@ -473,15 +473,15 @@ function handleMessage(msg) {
                 alert(`连续四次虚着，对局结束！\n黑: ${formatScore(blackTotal)} 白: ${formatScore(whiteTotal)} (贴${KOMI})\n${winner}`);
             } else if (msg.action === 'resign') {
                 alert(`${msg.player} 认输，对局结束`);
-                lastMoveMarkers = [DELETE_IT]; drawBoard();
+                lastMoveMarkers = []; drawBoard();
             }
             break;
         case 'newGame':
             board = msg.board; unstableInfo = msg.unstableInfo || Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
             moveCount = msg.moveCount || 0; currentPlayer = msg.currentPlayer || 1;
-            lastMoveMarkers = msg.lastMoveMarkers || [DELETE_IT];
-            historyStates = [DELETE_IT];
-            bornAtMove = [DELETE_IT];
+            lastMoveMarkers = msg.lastMoveMarkers || [];
+            historyStates = [];
+            bornAtMove = [];
             myColor = null;
             radioBlack.checked = false;
             radioWhite.checked = false;
@@ -681,9 +681,9 @@ document.getElementById('leaveRoomBtn').addEventListener('click', () => {
 
         board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
         unstableInfo = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
-        lastMoveMarkers = [DELETE_IT];
-        historyStates =[DELETE_IT];
-        bornAtMove = [DELETE_IT];
+        lastMoveMarkers = [];
+        historyStates =[];
+        bornAtMove = [];
         myColor = null;
         isMyTurn = false;
         roomIdDisplay.innerText = "房间: ----";

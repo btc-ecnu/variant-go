@@ -26,8 +26,8 @@ module.exports = function (wss) {
             unstableInfo: Array(19).fill().map(() => Array(19).fill(0)),
             moveCount: 0,
             currentPlayer: 1,
-            historyStates: [DELETE_IT],
-            lastMoveMarkers:[DELETE_IT],
+            historyStates: [],
+            lastMoveMarkers:[],
             gameOver: false,
             passCounter: 0
         };
@@ -38,7 +38,7 @@ module.exports = function (wss) {
     }
 
     function copyMarkers(markers) {
-        if (!markers || markers.length === 0) return [DELETE_IT];
+        if (!markers || markers.length === 0) return [];
         return markers.filter(m => m && m.row !== undefined).map(m => ({ row: m.row, col: m.col, color: m.color }));
     }
 
@@ -207,7 +207,7 @@ module.exports = function (wss) {
                 room.unstableInfo = msg.unstableInfo;
                 room.moveCount = msg.moveCount;
                 room.currentPlayer = msg.nextPlayer;
-                room.lastMoveMarkers = msg.lastMoveMarkers || [DELETE_IT];
+                room.lastMoveMarkers = msg.lastMoveMarkers || [];
 
                 broadcastToRoom(room, {
                     type: 'broadcast',
@@ -239,7 +239,7 @@ module.exports = function (wss) {
                 room.unstableInfo = msg.unstableInfo;
                 room.moveCount = msg.moveCount;
                 room.currentPlayer = msg.nextPlayer;
-                room.lastMoveMarkers = msg.lastMoveMarkers || [DELETE_IT];
+                room.lastMoveMarkers = msg.lastMoveMarkers || [];
                 room.passCounter++;
 
                 broadcastToRoom(room, {
@@ -315,8 +315,8 @@ module.exports = function (wss) {
                 room.unstableInfo = Array(19).fill().map(() => Array(19).fill(0));
                 room.moveCount = 0;
                 room.currentPlayer = 1;
-                room.historyStates = [DELETE_IT];
-                room.lastMoveMarkers = [DELETE_IT];
+                room.historyStates = [];
+                room.lastMoveMarkers = [];
                 room.gameOver = false;
                 room.passCounter = 0;
                 room.blackTaken = false;
