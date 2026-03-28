@@ -633,7 +633,7 @@
         // ---------- WebSocket 大厅通信 ----------
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/unstable-weiqi`;
+            const wsUrl = `${protocol}//${window.location.host}/unstable-go`;
             ws = new WebSocket(wsUrl);
             ws.onopen = () => console.log('已连接对弈服务器');
             ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
