@@ -105,6 +105,7 @@ module.exports = function (wss) {
                     unstableInfo: unstableInfo,
                     moveCount: moveCount,
                     currentPlayer: currentPlayer,
+                    historyStates: historyStates, // 【修复】：下发完整的历史状态
                     lastMoveMarkers: lastMoveMarkers
                 }, ws);
 
@@ -140,6 +141,7 @@ module.exports = function (wss) {
                     moveCount: moveCount,
                     currentPlayer: currentPlayer,
                     player: ws.playerColor,
+                    historyStates: historyStates, // 【修复】：下发完整的历史状态
                     lastMoveMarkers: lastMoveMarkers
                 }, ws);
 
