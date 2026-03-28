@@ -158,9 +158,13 @@ module.exports = function (wss) {
             // ----- 悔棋请求 -----
             if (type === 'undoRequest') {
                 const target = (ws.playerColor === 'black' ? whiteSocket : blackSocket);
-                if (target) target.send(JSON.stringify({ type: 'undoRequest' }));
+                // 【修复】：增加 readyState 检查，防止向已断开的 socket 写入导致进程崩溃
+                if (target && target.readyState === WebSocket.OPEN) {
+                    target.send(JSON.stringify({ type: 'undoRequest' }));
+                }
                 return;
             }
+
             if (type === 'undoResponse') {
                 if (msg.accept) {
                     if (historyStates.length > 0) {
@@ -189,7 +193,10 @@ module.exports = function (wss) {
             // ----- 终局申请 -----
             if (type === 'endRequest') {
                 const target = (ws.playerColor === 'black' ? whiteSocket : blackSocket);
-                if (target) target.send(JSON.stringify({ type: 'endRequest' }));
+                // 【修复】：同上
+                if (target && target.readyState === WebSocket.OPEN) {
+                    target.send(JSON.stringify({ type: 'endRequest' }));
+                }
                 passCounter = 0;
                 return;
             }
