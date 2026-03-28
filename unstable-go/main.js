@@ -560,20 +560,37 @@ document.getElementById('createPrivateBtn').addEventListener('click', () => {
 });
 
 document.getElementById('joinRoomBtn').addEventListener('click', () => {
-    const id = prompt('请输入4位房间号:');
+    let id = prompt('请输入4位房间号:');
+    
+    // 1. 处理取消输入或空输入
+    if (id === null) return; 
+    
+    // 2. 去除首尾不可见空格（关键优化）
+    id = id.trim();
+    
     if (!id) return;
-    // [修复] 此处将有误的转义 `\\d` 纠正为了正确的正则转义 `\d`
-    if (!/^\d{4}$/.test(id)) {
+
+    // 3. 正则匹配：确保是纯 4 位数字
+    // 采用更稳健的写法
+    const isFourDigits = /^\d{4}$/.test(id);
+    
+    if (!isFourDigits) {
         alert('请输入正确的房间号（4位纯数字）');
+        return;
+    }
+
+    // 4. 查找房间
+    if (!currentRooms || currentRooms.length === 0) {
+        alert('当前大厅暂无房间信息，请刷新或稍后再试');
         return;
     }
 
     const room = currentRooms.find(r => r.id === id);
     if (!room) {
-        alert('房间不存在');
+        alert('房间 ' + id + ' 不存在');
         return;
     }
-
+    
     joinRoom(id, room.isPrivate);
 });
 
