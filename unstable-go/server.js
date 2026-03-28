@@ -2,7 +2,7 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
-const unstableWeiqi = require('./unstable-weiqi');
+const unstableGo = require('./unstable-go');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,7 +17,7 @@ const wss = new WebSocket.Server({ noServer: true });
 // 处理 WebSocket 的协议升级
 server.on('upgrade', (request, socket, head) => {
     // 这里的路径必须与你 HTML 中的 wsUrl 路径一致
-    if (request.url === '/unstable-weiqi') {
+    if (request.url === '/unstable-go') {
         wss.handleUpgrade(request, socket, head, (ws) => {
             wss.emit('connection', ws, request);
         });
@@ -27,7 +27,7 @@ server.on('upgrade', (request, socket, head) => {
 });
 
 // 将 WebSocket 实例传入你的业务逻辑模块
-unstableWeiqi(wss);
+unstableGo(wss);
 
 const PORT = 3000;
 server.listen(PORT, () => {
