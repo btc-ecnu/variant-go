@@ -1,7 +1,6 @@
 const WebSocket = require('ws');
 
 module.exports = function (wss) {
-    // 使用 Map 管理多个房间，key 为 4位字符串 roomId
     const rooms = new Map();
 
     function generateRoomId() {
@@ -27,8 +26,8 @@ module.exports = function (wss) {
             unstableInfo: Array(19).fill().map(() => Array(19).fill(0)),
             moveCount: 0,
             currentPlayer: 1,
-            historyStates: [],
-            lastMoveMarkers:[],
+            historyStates: [DELETE_IT],
+            lastMoveMarkers:[DELETE_IT],
             gameOver: false,
             passCounter: 0
         };
@@ -39,7 +38,8 @@ module.exports = function (wss) {
     }
 
     function copyMarkers(markers) {
-        return markers.map(m => ({ row: m.row, col: m.col, color: m.color }));
+        if (!markers || markers.length === 0) return [DELETE_IT];
+        return markers.filter(m => m && m.row !== undefined).map(m => ({ row: m.row, col: m.col, color: m.color }));
     }
 
     function broadcastToRoom(room, data, exclude = null) {
@@ -52,7 +52,6 @@ module.exports = function (wss) {
     }
 
     function broadcastRoomList() {
-        // 按创建时间从新到旧排序
         const list = Array.from(rooms.values())
             .sort((a, b) => b.createdAt - a.createdAt)
             .map(r => ({
@@ -64,7 +63,6 @@ module.exports = function (wss) {
         
         const payload = JSON.stringify({ type: 'roomList', rooms: list });
         wss.clients.forEach(client => {
-            // 只向未加入房间的玩家广播大厅列表
             if (client.readyState === WebSocket.OPEN && !client.roomId) {
                 client.send(payload);
             }
@@ -75,17 +73,14 @@ module.exports = function (wss) {
         const room = rooms.get(roomId);
         if (!room) return;
         
-        // 如果此前在别的房间，先退出
         leaveRoom(ws);
 
         ws.roomId = roomId;
         ws.playerColor = undefined;
         room.clients.add(ws);
         
-        // 告知客户端加入成功并进入房间UI
         ws.send(JSON.stringify({ type: 'joinSuccess', roomId }));
 
-        // 下发房间初始信息与状态
         ws.send(JSON.stringify({
             type: 'init',
             blackTaken: room.blackTaken,
@@ -102,7 +97,6 @@ module.exports = function (wss) {
             lastMoveMarkers: room.lastMoveMarkers
         }));
 
-        // 更新大厅状态
         broadcastRoomList();
     }
 
@@ -118,10 +112,8 @@ module.exports = function (wss) {
                 room.whiteTaken = false;
                 room.whiteSocket = null;
             }
-            // 通知房间内其他人座位已空出
             broadcastToRoom(room, { type: 'init', blackTaken: room.blackTaken, whiteTaken: room.whiteTaken });
 
-            // 房间为空时自动销毁
             if (room.clients.size === 0) {
                 rooms.delete(room.id);
             }
@@ -133,7 +125,6 @@ module.exports = function (wss) {
     wss.on('connection', (ws) => {
         ws.roomId = null;
 
-        // 连接建立立刻发送当前房间列表
         const list = Array.from(rooms.values())
             .sort((a, b) => b.createdAt - a.createdAt)
             .map(r => ({
@@ -148,7 +139,6 @@ module.exports = function (wss) {
             const msg = JSON.parse(raw);
             const { type } = msg;
 
-            // ===== 大厅专属逻辑 =====
             if (type === 'createRoom') {
                 const id = generateRoomId();
                 const room = createRoom(id, msg.isPrivate, msg.password);
@@ -176,8 +166,6 @@ module.exports = function (wss) {
                 return;
             }
 
-            // ===== 房间内游戏逻辑 =====
-            // 下列操作必须依赖合法的 roomId 才能执行
             if (!ws.roomId || !rooms.has(ws.roomId)) return;
             const room = rooms.get(ws.roomId);
 
@@ -199,7 +187,7 @@ module.exports = function (wss) {
                     ws.send(JSON.stringify({ type: 'colorTaken' }));
                 }
                 room.passCounter = 0;
-                broadcastRoomList(); // 状态改变需同步给大厅
+                broadcastRoomList();
                 return;
             }
 
@@ -219,7 +207,7 @@ module.exports = function (wss) {
                 room.unstableInfo = msg.unstableInfo;
                 room.moveCount = msg.moveCount;
                 room.currentPlayer = msg.nextPlayer;
-                room.lastMoveMarkers = msg.lastMoveMarkers ||[];
+                room.lastMoveMarkers = msg.lastMoveMarkers || [DELETE_IT];
 
                 broadcastToRoom(room, {
                     type: 'broadcast',
@@ -251,7 +239,7 @@ module.exports = function (wss) {
                 room.unstableInfo = msg.unstableInfo;
                 room.moveCount = msg.moveCount;
                 room.currentPlayer = msg.nextPlayer;
-                room.lastMoveMarkers = msg.lastMoveMarkers ||[];
+                room.lastMoveMarkers = msg.lastMoveMarkers || [DELETE_IT];
                 room.passCounter++;
 
                 broadcastToRoom(room, {
@@ -327,8 +315,8 @@ module.exports = function (wss) {
                 room.unstableInfo = Array(19).fill().map(() => Array(19).fill(0));
                 room.moveCount = 0;
                 room.currentPlayer = 1;
-                room.historyStates = [];
-                room.lastMoveMarkers =[];
+                room.historyStates = [DELETE_IT];
+                room.lastMoveMarkers = [DELETE_IT];
                 room.gameOver = false;
                 room.passCounter = 0;
                 room.blackTaken = false;
@@ -351,7 +339,7 @@ module.exports = function (wss) {
                     whiteTaken: room.whiteTaken
                 }, null);
                 
-                broadcastRoomList(); // 颜色清空，通知大厅刷新UI
+                broadcastRoomList();
                 return;
             }
         });
